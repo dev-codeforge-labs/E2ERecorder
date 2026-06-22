@@ -1,0 +1,29 @@
+# Build output
+dist/
+
+# Temporary build artefacts
+*.tmp.xpi
+*.tmp.zip
+
+# Generator scripts (internal tooling, not part of the extension)
+docs/gen_manual.js
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Node (if ever used locally for tooling)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Python cache (used by build.sh internally)
+__pycache__/
+*.pyc

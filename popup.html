@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E2E Recorder v2</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+  <!-- ── Header ───────────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-left">
+      <span id="status-dot" class="status-dot" title="Idle"></span>
+      <h1 class="header-title">E2E Recorder <span class="version">v2</span></h1>
+    </div>
+    <div class="header-right">
+      <span id="tab-badge" class="tab-badge" title="Active tabs">0 tabs</span>
+    </div>
+  </header>
+
+  <!-- ── Main nav tabs ─────────────────────────────────────────────────────── -->
+  <nav class="main-tabs">
+    <button class="main-tab active" data-panel="panel-recorder">Recorder</button>
+    <button class="main-tab" data-panel="panel-logs">
+      Logs <span id="log-count-badge" class="log-badge" style="display:none">0</span>
+    </button>
+  </nav>
+
+  <!-- ══ RECORDER PANEL ════════════════════════════════════════════════════ -->
+  <div id="panel-recorder" class="panel">
+
+    <!-- ── Controls ────────────────────────────────────────────────────────── -->
+    <section class="controls">
+      <button id="btn-record" class="btn btn-primary" title="Start recording">
+        &#9210; Record
+      </button>
+      <button id="btn-stop" class="btn btn-danger" style="display:none" title="Stop recording">
+        &#9209; Stop
+      </button>
+      <button id="btn-assertion" class="btn btn-secondary" title="Toggle assertion capture mode">
+        &#10003; Assert
+      </button>
+      <button id="btn-test" class="btn btn-ghost" title="Replay recorded session in active tab">
+        &#9654; Test
+      </button>
+      <button id="btn-clear" class="btn btn-ghost btn-danger-ghost" title="Clear all recorded events">
+        &#10005; Clear
+      </button>
+    </section>
+
+    <!-- ── Status bar ──────────────────────────────────────────────────────── -->
+    <div id="status-bar" class="status-bar">
+      <span id="status-text">Idle — open a page and click Record</span>
+      <span id="event-count" class="event-count">0 events</span>
+    </div>
+
+    <!-- ── Event Editor ────────────────────────────────────────────────────── -->
+    <section id="editor-section" class="editor-section">
+      <div class="editor-toolbar" id="editor-toolbar" style="display:none">
+        <span class="editor-toolbar-label">Selectors</span>
+        <button id="btn-expand-all"   class="btn btn-ghost btn-xs" title="Expand all selector panels">⊞ Expand all</button>
+        <button id="btn-collapse-all" class="btn btn-ghost btn-xs" title="Collapse all selector panels">⊟ Collapse all</button>
+      </div>
+      <div id="event-list" class="event-list">
+        <div class="empty-state" id="empty-state">
+          No events recorded yet.<br />Click <strong>Record</strong> to start.
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Export Section ──────────────────────────────────────────────────── -->
+    <section id="export-section" class="export-section">
+      <div class="export-header">
+        <span class="section-label">Export</span>
+        <div class="framework-tabs">
+          <button class="fw-tab active" data-fw="playwright-ts">PW-TS</button>
+          <button class="fw-tab" data-fw="playwright-python">PW-PY</button>
+          <button class="fw-tab" data-fw="cypress">Cypress</button>
+          <button class="fw-tab" data-fw="selenium">Selenium</button>
+        </div>
+      </div>
+
+      <div class="export-options">
+        <label class="toggle-label">
+          <input type="checkbox" id="toggle-pom" />
+          <span>Page Object Model</span>
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="toggle-a11y" />
+          <span>Include A11y</span>
+        </label>
+      </div>
+
+      <textarea id="code-output" class="code-output" readonly spellcheck="false"
+        placeholder="Generated test code will appear here..."></textarea>
+
+      <div class="export-actions">
+        <button id="btn-copy" class="btn btn-secondary btn-sm">&#10166; Copy</button>
+        <button id="btn-download" class="btn btn-secondary btn-sm">&#8615; Download</button>
+        <span id="copy-confirm" class="copy-confirm" style="display:none">Copied!</span>
+      </div>
+    </section>
+
+  </div><!-- /panel-recorder -->
+
+  <!-- ══ LOGS PANEL ════════════════════════════════════════════════════════ -->
+  <div id="panel-logs" class="panel" style="display:none">
+
+    <div class="log-toolbar">
+      <select id="log-level-filter" class="log-select" title="Filter by level">
+        <option value="all">All levels</option>
+        <option value="error">Error</option>
+        <option value="warn">Warn+</option>
+        <option value="info">Info+</option>
+      </select>
+      <select id="log-source-filter" class="log-select" title="Filter by source">
+        <option value="all">All sources</option>
+        <option value="background">Background</option>
+        <option value="content">Content</option>
+        <option value="popup">Popup</option>
+      </select>
+      <button id="btn-copy-logs" class="btn btn-secondary btn-sm" title="Copy all logs to clipboard">Copy</button>
+      <button id="btn-clear-logs" class="btn btn-ghost btn-sm" title="Clear log history">Clear</button>
+    </div>
+
+    <div id="log-list" class="log-list">
+      <div class="log-empty" id="log-empty">No logs yet.</div>
+    </div>
+
+  </div><!-- /panel-logs -->
+
+  <!-- ── Scripts ───────────────────────────────────────────────────────────── -->
+  <script src="modules/compilers.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
