@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Red circle background -->
+  <circle cx="24" cy="24" r="22" fill="#ef4444"/>
+  <!-- White border ring -->
+  <circle cx="24" cy="24" r="22" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.3"/>
+  <!-- White "R" letter -->
+  <text
+    x="24"
+    y="33"
+    font-family="'Segoe UI', Arial, sans-serif"
+    font-size="24"
+    font-weight="700"
+    text-anchor="middle"
+    fill="#ffffff"
+    letter-spacing="-0.5"
+  >R</text>
+</svg>

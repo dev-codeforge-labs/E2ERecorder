@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E2E Recorder v2 — Privacy Policy</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 780px; margin: 48px auto; padding: 0 24px; color: #1a1a2e; line-height: 1.7; }
+    h1 { font-size: 1.8rem; border-bottom: 2px solid #7c3aed; padding-bottom: 12px; }
+    h2 { font-size: 1.15rem; margin-top: 2rem; color: #4c1d95; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #d1d5db; padding: 8px 12px; text-align: left; }
+    th { background: #f5f3ff; }
+    .badge { display: inline-block; background: #d1fae5; color: #065f46; border-radius: 4px; padding: 2px 8px; font-size: 0.85rem; font-weight: 600; }
+    .last-updated { color: #6b7280; font-size: 0.9rem; }
+    footer { margin-top: 3rem; border-top: 1px solid #e5e7eb; padding-top: 1rem; font-size: 0.85rem; color: #6b7280; }
+  </style>
+</head>
+<body>
+
+<h1>E2E Recorder v2 &mdash; Privacy Policy</h1>
+<p class="last-updated">Last updated: June 2026 &nbsp;|&nbsp; Version 2.0.0</p>
+
+<p>
+  <span class="badge">100% Local</span> &nbsp;
+  E2E Recorder v2 does <strong>not</strong> collect, transmit, sell, or share any personal data
+  or browsing information with any third party. All data processed by this extension
+  stays exclusively on your device.
+</p>
+
+<h2>1. Who we are</h2>
+<p>
+  E2E Recorder v2 is an open-source browser extension. It is not operated by a company
+  and does not have a backend server, analytics service, or any form of remote infrastructure.
+</p>
+
+<h2>2. What data the extension accesses</h2>
+<p>
+  The extension injects a content script into web pages you visit <strong>only while
+  recording is active</strong> (after you click the Record button). During recording it reads:
+</p>
+<ul>
+  <li>The URL of the active tab (to generate <code>navigate</code> events)</li>
+  <li>DOM attributes of elements you click, type into, or hover over (to compute CSS selectors)</li>
+  <li>Text values you type into form fields (stored locally to generate test scripts)</li>
+</ul>
+<p>
+  When recording is <strong>not active</strong>, the content script is present in the page
+  but does not read or transmit any data.
+</p>
+
+<h2>3. Where data is stored</h2>
+<p>
+  All recorded data (events, selectors, generated test code, extension logs) is stored
+  exclusively in <code>browser.storage.local</code>, which is a sandboxed area of your
+  browser&rsquo;s local storage. It is never written to disk outside the browser profile
+  and is never sent to any external server.
+</p>
+<table>
+  <tr><th>Data type</th><th>Storage location</th><th>Leaves device?</th></tr>
+  <tr><td>Recorded events (clicks, fills, navigations)</td><td>browser.storage.local</td><td>Never</td></tr>
+  <tr><td>CSS selectors</td><td>browser.storage.local</td><td>Never</td></tr>
+  <tr><td>Typed text values (including masked passwords)</td><td>browser.storage.local</td><td>Never</td></tr>
+  <tr><td>Generated test code (Playwright, Cypress, Selenium)</td><td>browser.storage.local</td><td>Never</td></tr>
+  <tr><td>Extension debug logs</td><td>browser.storage.local</td><td>Never</td></tr>
+  <tr><td>Downloaded test files (via &ldquo;Download&rdquo; button)</td><td>Your local filesystem</td><td>Never</td></tr>
+</table>
+
+<h2>4. Sensitive data handling</h2>
+<p>
+  If a form field is detected as a password field (type="password") or its name/id
+  matches common patterns for sensitive credentials (e.g. <code>cvv</code>, <code>token</code>,
+  <code>api_key</code>), the extension automatically replaces the typed value with the
+  placeholder <code>ENV_SECRET_PARAM</code> and marks the event as masked.
+  <strong>The actual secret value is never stored.</strong>
+</p>
+
+<h2>5. Permissions used and why</h2>
+<table>
+  <tr><th>Permission</th><th>Reason</th></tr>
+  <tr><td><code>storage</code></td><td>Store recording state in browser.storage.local</td></tr>
+  <tr><td><code>activeTab</code></td><td>Read the URL of the current tab when starting a recording</td></tr>
+  <tr><td><code>tabs</code></td><td>Detect when new tabs open during a multi-tab recording session</td></tr>
+  <tr><td><code>scripting</code></td><td>Inject the content script into pages when needed</td></tr>
+  <tr><td><code>downloads</code></td><td>Save generated test files to your local filesystem via the Download button</td></tr>
+  <tr><td><code>&lt;all_urls&gt;</code></td><td>The extension must be able to record interactions on any website the user chooses to test. Without this permission the extension cannot inject the capture script.</td></tr>
+</table>
+
+<h2>6. Third-party services</h2>
+<p>
+  The extension makes <strong>no network requests of its own</strong>. It does not load
+  any external scripts, fonts, images, or analytics libraries. There are no third-party
+  SDKs embedded in the extension.
+</p>
+
+<h2>7. Data retention and deletion</h2>
+<p>
+  Recorded data persists in <code>browser.storage.local</code> until you:
+</p>
+<ul>
+  <li>Click the <strong>Clear</strong> button in the extension popup (clears the current session)</li>
+  <li>Uninstall the extension (the browser removes all associated storage automatically)</li>
+</ul>
+<p>There is no automatic retention period; data is kept until you explicitly clear it.</p>
+
+<h2>8. Children</h2>
+<p>
+  This extension is a developer tool and is not directed at children under 13.
+  It does not knowingly collect information from children.
+</p>
+
+<h2>9. Changes to this policy</h2>
+<p>
+  If a future version of the extension changes how data is handled, this page will be
+  updated and the &ldquo;Last updated&rdquo; date will change. Significant changes will
+  also be noted in the extension&rsquo;s changelog.
+</p>
+
+<h2>10. Contact</h2>
+<p>
+  Questions about this privacy policy can be raised by opening an issue in the
+  extension&rsquo;s public source code repository.
+</p>
+
+<footer>
+  E2E Recorder v2 &mdash; Open-source browser extension &mdash; No data ever leaves your device.
+</footer>
+
+</body>
+</html>
