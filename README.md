@@ -1,132 +1,264 @@
 # E2E Recorder v2
 
-A Firefox browser extension that records user interactions on any website and exports them as ready-to-run test scripts for Playwright (TypeScript or Python), Cypress, or Selenium WebDriver.
+A browser extension for **Firefox** and **Chrome** that records user interactions on any website and exports them as ready-to-run automated test scripts.
+
+[![Firefox](https://img.shields.io/badge/Firefox-140%2B-orange?logo=firefox)](https://addons.mozilla.org)
+[![Chrome](https://img.shields.io/badge/Chrome-88%2B-blue?logo=googlechrome)](https://chrome.google.com/webstore)
+[![License: MIT](https://img.shields.io/badge/License-MIT-purple)](LICENSE)
+
+---
+
+## Supported export frameworks
+
+| Framework | Language | File extension |
+|-----------|----------|---------------|
+| Playwright | TypeScript | `.spec.ts` |
+| Playwright | Python | `.spec.py` |
+| Cypress | JavaScript | `.spec.js` |
+| Selenium WebDriver | JavaScript | `.js` |
 
 ---
 
 ## Features
 
-- **One-click recording** — captures clicks, fills, keypresses, hovers, scrolls, drag-and-drop, file uploads, and native select changes.
-- **Smart selectors** — scores and ranks locators by stability (data-testid > id > aria-label > role > …). Colour-coded traffic-light outline shows selector quality in real time.
-- **Shadow DOM support** — builds `host >>> inner` chains for elements inside shadow roots.
-- **iframe support** — tracks `frameLocator` chains for elements inside nested iframes.
-- **Multi-tab tracking** — detects new tabs opened by clicks and emits `Promise.all` / `expect_page` patterns.
-- **Assertion engine** — watches for URL changes, toasts, alerts, modals, and disappearing elements after each action and suggests assertions.
-- **Inline selector editor** — click any selector in the event list to edit it; real-time uniqueness validation via the active tab.
-- **Alt+click picker** — hold Alt and click any element to see the top 3 ranked locators and choose one.
-- **Drag-to-reorder** — HTML5 drag handles on every event row.
-- **Parameterization hints** — detected email addresses and phone numbers can be extracted as named variables.
-- **Export formats** — Playwright TS, Playwright Python, Cypress, Selenium JS.
-- **Page Object Model** — optional POM generation groups locators by page hostname.
+### Recording
+- **One-click recording** — captures clicks, text input, keypresses, hover, scroll, drag-and-drop, file upload, and native `<select>` changes.
+- **400 ms debounce on fill** — groups rapid keystrokes into a single `fill` event per field.
+- **Sensitive data masking** — password fields and inputs matching credential patterns (`api_key`, `token`, `cvv`…) are automatically replaced with `ENV_SECRET_PARAM`. The real value is never stored.
+- **Multi-tab tracking** — detects new tabs opened by clicks (OAuth pop-ups, `target="_blank"`) and emits the correct new-page-wait code for each framework.
+- **SPA navigation** — listens to `pushState` / `popstate` / hash changes in addition to full page loads.
+
+### Selector engine
+- **Stability scoring** — ranks every possible locator and picks the most stable one automatically:
+
+  | Attribute | Score |
+  |-----------|------:|
+  | `data-testid` / `data-cy` | 100 |
+  | Static `id` | 85 |
+  | `aria-label` | 75 |
+  | `role` | 72 |
+  | `name` | 70 |
+  | `placeholder` | 65 |
+  | Visible text | 60 |
+  | First CSS class | 30 |
+  | Tag name | 10 |
+  | `nth-child` (fallback) | 5 |
+
+  Dynamic IDs/classes (≥ 3 consecutive digits, `css-`, `Mui`, `chakra-`, `ng-`) receive a −50 penalty.
+
+- **Traffic-light overlay** — while recording, a coloured outline on the hovered element shows selector quality in real time (green ≥ 75 · amber 40–74 · red < 40).
+- **Shadow DOM** — builds `host >>> inner` chains for elements inside shadow roots.
+- **Iframe chains** — attaches the full `frameChain` array to events inside nested frames.
+
+### Selector candidates panel
+Each recorded action captures up to **6 alternative selectors**. Expand the ⚙ panel on any event row to:
+- **Test** a candidate against the live page — see how many elements it matches and highlight them.
+- **Use** a candidate to replace the active selector.
+- **Discard** a candidate to remove it permanently.
+
+Use **⊞ Expand all** / **⊟ Collapse all** in the editor toolbar to manage all panels at once.
+
+### Event editor
+- **Delete** any step with the 🗑 button.
+- **Reorder** steps by dragging the ☰ handle.
+- **Edit selectors inline** — click any selector text to edit it; real-time uniqueness validation against the active tab (green = unique, amber = multiple matches, red = not found).
+- **Insert new steps** between existing events — hover between rows to reveal the ➕ zone and fill in the inline form (supported types: `navigate`, `click`, `fill`, `keypress`, `hover`, `scroll`, `selectOption`, `wait`).
+
+### Assertion engine
+After each recorded action the extension watches for significant DOM changes and auto-suggests assertions:
+
+| Trigger | Suggested assertion |
+|---------|---------------------|
+| URL changed | `toHaveURL` |
+| Toast / alert / snackbar appeared | `toBeVisible` |
+| Modal (`role="dialog"`) appeared | `toBeVisible` |
+| Element disappeared | `toBeHidden` |
+
+Accept (✓) or discard (✗) each suggestion — only accepted ones appear in the exported code.
+
+### Replay
+Click **▶ Test** to replay the full recorded session against the live page. Each step shows a real-time status indicator:
+
+| Symbol | Meaning |
+|--------|---------|
+| ✓ | Step passed |
+| ✗ | Selector not found or action failed |
+| ⟳ | Step currently executing |
+| – | Step skipped (e.g. `navigate`, `closeContext`) |
+
+Failed rows are highlighted in red. Fix the selector and re-run without re-recording.
+
+### Export options
+- **Page Object Model** — generates a separate class file per page/view alongside the test script.
+- **Copy to clipboard** or **download** as a file (ZIP if POM is enabled and multiple files are generated).
+
+### Logs panel
+A dedicated **Logs** tab in the popup captures diagnostic messages from all three extension contexts (background, content script, popup) with level (`INFO` / `WARN` / `ERROR` / `DEBUG`) and source filtering. Useful for troubleshooting recording issues without opening DevTools.
 
 ---
 
-## Installation (Firefox — Temporary Add-on)
+## Installation
 
-1. Open Firefox and navigate to `about:debugging`.
-2. Click **This Firefox** in the left sidebar.
-3. Click **Load Temporary Add-on…**.
-4. Browse to the `E2ERecorder` folder and select `manifest.json`.
-5. The extension icon (red **R**) appears in the toolbar.
+### Firefox (from XPI)
 
-> **Note:** Temporary add-ons are removed when Firefox restarts. To persist the extension, sign and distribute it via [addons.mozilla.org](https://addons.mozilla.org) (AMO) or use a self-signed XPI.
+1. Run the build script to produce the XPI:
+   ```
+   build.cmd          # Windows
+   ./build.sh         # macOS / Linux
+   ```
+   Output: `dist/e2e-recorder-v2.xpi`
+
+2. Open Firefox → `about:addons` → gear icon ⚙ → **Install Add-on From File…**
+3. Select `dist/e2e-recorder-v2.xpi` and confirm.
+
+> **Temporary load (development):** Go to `about:debugging` → **This Firefox** → **Load Temporary Add-on…** → select `manifest.json`. The extension is removed on restart.
+
+**Minimum version:** Firefox 140+
 
 ---
 
-## Usage Guide
+### Chrome / Edge (unpacked)
 
-### Starting a recording
+1. Run the Chrome build script:
+   ```
+   build_Chrome.cmd   # Windows
+   ./build_Chrome.sh  # macOS / Linux
+   ```
+   Output: `dist/e2e-recorder-v2-chrome.zip`
+
+2. Unzip the file into an empty folder (e.g. `dist/chrome-unpacked/`).
+3. Open `chrome://extensions` (or `edge://extensions`).
+4. Enable **Developer mode** (top-right toggle).
+5. Click **Load unpacked** and select the unzipped folder.
+
+**Minimum version:** Chrome / Edge 88+
+
+---
+
+## Build scripts
+
+| Script | Platform | Output |
+|--------|----------|--------|
+| `build.cmd` / `build.ps1` | Windows | `dist/e2e-recorder-v2.xpi` |
+| `build.sh` | macOS / Linux | `dist/e2e-recorder-v2.xpi` |
+| `build_Chrome.cmd` / `build_Chrome.ps1` | Windows | `dist/e2e-recorder-v2-chrome.zip` |
+| `build_Chrome.sh` | macOS / Linux | `dist/e2e-recorder-v2-chrome.zip` |
+
+No build tools, transpilers, or package managers are required. The scripts zip the source files as-is.
+
+---
+
+## Usage
+
+### 1 · Start recording
 
 1. Navigate to the page you want to test.
-2. Click the **E2E Recorder** toolbar icon to open the popup.
-3. Click **⏺ Record**. The status dot turns red and blinks.
-4. Interact with the page normally — every click, fill, keypress, etc. is captured.
-5. Click **⏹ Stop** when done.
+2. Click the **E2E Recorder** toolbar icon.
+3. Click **⏺ Record** — the status dot turns red and blinks.
+4. Interact with the page (click, type, navigate…).
+5. Click **⏹ Stop Recording** when done.
 
-### Traffic-light outlines
+### 2 · Review and edit
 
-While recording, hovering over any element shows a coloured outline:
+- Open the **⚙ Selectors** panel on any row to test alternative selectors.
+- Click a selector text to edit it inline.
+- Hover between rows and click **➕** to insert a manual step.
+- Accept or discard assertion suggestions below the relevant events.
 
-| Colour | Meaning |
-|--------|---------|
-| Green  | Stable selector (score ≥ 70) — safe to use |
-| Amber  | Acceptable but fragile (score 40–69) |
-| Red    | Unstable — positional or hashed class name |
+### 3 · Replay (optional)
 
-### Alt+click selector picker
+Click **▶ Test** to run the session against the live page and verify all selectors still work before exporting.
 
-Hold **Alt** and click any element to open a floating picker listing the top 3 candidate selectors with their stability scores. Click one to record it instead of the auto-chosen selector.
+### 4 · Export
 
-### Assertion mode
-
-1. Click **✓ Assert** to enable assertion mode (status dot turns amber).
-2. Click any element — instead of recording a click, the extension suggests a `toBeVisible` assertion for that element.
-3. After each recorded action the Assertion Engine also auto-suggests URL-change, toast, modal, and disappearance assertions.
-4. Accept (✓) or discard (✕) each suggestion in the event list.
-
-### Editing selectors
-
-Click any selector text in the event list to edit it inline. The field validates the selector against the active tab in real time:
-
-- **Green border** — valid, uniquely matches one element.
-- **Amber border** — valid but matches multiple elements.
-- **Red border** — invalid CSS selector syntax.
-
-Press **Enter** to commit or **Escape** to cancel.
-
-### Exporting tests
-
-1. In the **Export** panel choose a framework tab: **PW-TS**, **PW-PY**, **Cypress**, or **Selenium**.
-2. Optionally enable **Page Object Model** (generates a class per page) and/or **Include A11y** (adds accessibility warning comments).
-3. Click **⎘ Copy** to copy to clipboard, or **⬇ Download** to save the file(s).
-
-### Clearing a session
-
-Click **✕ Clear** to discard all events and start fresh.
+1. Choose a framework tab: **PW-TS** · **PW-PY** · **Cypress** · **Selenium**.
+2. Optionally enable **Page Object Model**.
+3. Click **⎘ Copy** or **⬇ Download**.
 
 ---
 
-## Known Limitations
-
-1. **Temporary installation only.** Firefox removes unsigned extensions on restart. The extension must be re-loaded via `about:debugging` each session, or packaged and signed for persistent use.
-
-2. **Cross-origin iframes are not fully supported.** The content script cannot access the DOM of cross-origin iframes due to browser security policy. Events inside cross-origin iframes are not captured, and no `frameLocator` chain is generated for them.
-
-3. **Multi-tab Cypress export is a stub.** Cypress does not support multi-tab testing natively. The exporter emits a warning comment and a `cy.stub(window, 'open')` pattern, but the user must implement the actual multi-tab strategy manually.
-
-4. **File upload paths are placeholders.** When a `<input type="file">` change is captured, the recorded `filePath` is a placeholder comment. The user must replace it with the real path or fixture name in the exported code.
-
-5. **Shadow DOM in Selenium requires JS execution.** Selenium WebDriver does not natively support shadow-DOM CSS selectors. The exporter wraps shadow-DOM interactions in `driver.executeScript(...)` calls, which may break if the shadow root is closed-mode.
-
-6. **Replay is navigation-only.** The **▶ Test** button replays the session by navigating the active tab to the recorded initial URL. Full step-by-step DOM replay inside the extension is not implemented — use the exported test script with the target framework's runner for full replay.
-
----
-
-## Project Structure
+## Project structure
 
 ```
 E2ERecorder/
-├── manifest.json              MV3 manifest
-├── background.js              Service worker — state mutations, tab lifecycle
-├── content.js                 Injected into every tab/frame — event capture
-├── popup.html                 Extension popup UI
-├── popup.css                  Dark-theme styles
-├── popup.js                   Popup logic — rendering, controls, export
+├── manifest.json              Firefox MV3 manifest
+├── manifest_chrome.json       Chrome / Edge MV3 manifest
+├── background.js              Background orchestrator — state writer, message router
+├── content.js                 Content script — DOM listeners, selector engine, replay
+├── popup.html                 Extension popup markup
+├── popup.css                  Popup styles
+├── popup.js                   Popup controller — rendering, event wiring, export UI
 ├── modules/
-│   ├── state-store.js         browser.storage.local abstraction
-│   ├── selectors.js           Scoring selector engine (DOM access)
-│   ├── compilers.js           Code generation for all frameworks
-│   └── assertion-engine.js    Post-event DOM/URL observer
-└── icons/
-    ├── icon-32.svg
-    └── icon-48.svg
+│   ├── state-store.js         browser.storage.local abstraction (StateStore)
+│   ├── selectors.js           SelectorEngine — scoring, Shadow DOM, iframe chains
+│   ├── compilers.js           Code generators for all four frameworks
+│   └── assertion-engine.js    Post-event DOM/URL observer and suggestion engine
+├── icons/
+│   ├── icon-16.png
+│   ├── icon-32.png
+│   ├── icon-48.png
+│   └── icon-128.png
+├── docs/
+│   ├── TECHNICAL_SPEC.md      Full technical specification
+│   ├── E2E_Recorder_v2_User_Manual.docx
+│   ├── privacy-policy.html    Hosted privacy policy
+│   ├── store-listing-firefox.md
+│   ├── store-listing-chrome.md
+│   └── PUBLISHING.md
+├── build.ps1 / build.cmd / build.sh
+└── build_Chrome.ps1 / build_Chrome.cmd / build_Chrome.sh
 ```
 
 ---
 
-## Architecture Notes
+## Architecture
 
-- **Single writer principle:** only `background.js` mutates the persisted state. Content scripts send `RECORD_EVENT` / `ADD_ASSERTION` messages; background writes and broadcasts `STATE_UPDATED`.
-- **No external dependencies:** pure vanilla JavaScript, no npm, no bundler required.
-- **Shadow DOM:** detected via `getRootNode() instanceof ShadowRoot`; selectors use the `host >>> inner` delimiter understood by Playwright natively.
-- **Selector scoring:** `data-testid`/`data-cy` = 100 → `id` = 85 → `aria-label` = 75 → `role` = 72 → `name` = 70 → `placeholder` = 65 → `innerText` = 60 → first class = 30 → tag = 10 → nth-child = 5. Patterns matching `/(\d{3,}|css-|Mui|chakra-|ng-|star-)/i` incur a −50 penalty. Non-unique selectors are halved.
+```
+Content script (all tabs/frames)
+        │  RECORD_EVENT, LOG_ENTRY, ADD_ASSERTION
+        ▼
+Background (service worker / classic page)
+        │  read → mutate → write → broadcast STATE_UPDATED
+        ▼
+browser.storage.local  ←── single source of truth
+        │
+        ▼
+Popup UI  ←── re-renders on every STATE_UPDATED
+```
+
+**Key invariants:**
+- Only `background.js` writes to `storage.local`. Content scripts and the popup send messages requesting mutations; they never write directly.
+- No in-memory state in the background — every handler reads fresh state from storage before acting. This survives service-worker restarts (Chrome) and accidental browser closure.
+- The Chrome/Firefox API shim (`if (typeof browser === 'undefined') { var browser = chrome; }`) is the only platform-specific code; it appears at the top of every JS file.
+
+---
+
+## Known limitations
+
+| Area | Limitation |
+|------|-----------|
+| Cross-origin iframes | The traffic-light overlay cannot appear inside cross-origin frames (browser security). Event capture still works because the content script is injected directly into the frame. |
+| File upload paths | The absolute file path cannot be captured (browser security). A `PLACEHOLDER_REPLACE_WITH_REAL_PATH/<filename>` token is generated; replace it with the real fixture path. |
+| Selenium + Shadow DOM | Selenium has no native shadow-piercing API. Generated code uses `executeScript` with an explanatory comment. |
+| Cypress + multi-tab | Cypress has limited multi-tab support. The generated script includes a `cy.origin()` suggestion and a warning comment. |
+| Canvas / WebGL drag targets | If the drag target is a `<canvas>`, only screen coordinates are captured — no CSS selector. |
+| Firefox minimum version | `data_collection_permissions` requires Firefox 140+ (desktop) and 142+ (Android). |
+
+---
+
+## Privacy
+
+**100% local. No data ever leaves your device.**
+
+- Zero outbound network requests — no analytics, no telemetry, no external scripts.
+- All recorded data is stored exclusively in `browser.storage.local` (sandboxed to the extension).
+- Password fields and credential inputs are masked before storage and never written in plain text.
+- Uninstalling the extension removes all associated storage automatically.
+
+Full policy: [`docs/privacy-policy.html`](docs/privacy-policy.html)
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
